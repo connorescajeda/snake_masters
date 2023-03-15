@@ -66,7 +66,9 @@ impl Game {
 
     pub fn tick(&mut self) {
         //self.walls.draw();
-        
+        if self.food.total_food < self.food.max_food{
+            self.food.add_food();
+        }
         for col in 0..BUFFER_WIDTH-1{
             for row in 0..BUFFER_HEIGHT-1{
                 
