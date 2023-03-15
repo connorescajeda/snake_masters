@@ -1,11 +1,13 @@
 #![cfg_attr(not(test), no_std)]
 
 use bare_metal_modulo::{ModNumC, MNum, ModNumIterator};
-use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable};
+use num::ToPrimitive;
+use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable, plot_num};
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
-use rand::SeedableRng;
+use rand::{SeedableRng, Rng};
 use rand::RngCore;
+use rand::rngs::SmallRng;
 use core::default::Default;
 
 
@@ -37,16 +39,35 @@ impl Game {
                     KeyCode::ArrowRight => {
                         self.player1.right()
                     }
+                    
                     _ => {}
                 }     
             }
-            DecodedKey::Unicode(_) => {}
+            DecodedKey::Unicode(key) => {
+                match key {
+                    's' => {
+                        self.player2.down()
+                        }
+                    'w' => {
+                        self.player2.up()
+                        }
+                    'a' => {
+                        self.player2.left()
+                        }
+                    'd' => {
+                        self.player2.right()
+                        }
+                    _ => {}
+                } 
+            }
         }
     }
 
     pub fn tick(&mut self) {
         //self.walls.draw();
-        plot('*', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
+        
+        plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
+        plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
     }
 }
 
@@ -58,7 +79,10 @@ pub struct Player {
 
 impl Player {
     pub fn new() -> Self {
-        Self {x: BUFFER_WIDTH / 2, y: BUFFER_HEIGHT / 2}
+        let mut small_rng = SmallRng::seed_from_u64(100000);
+        let rand_x = small_rng.gen_range(5..BUFFER_WIDTH - 5);
+        let rand_y = small_rng.gen_range(5..BUFFER_HEIGHT - 5);
+        Self {x: rand_x.to_usize().unwrap(), y: rand_y.to_usize().unwrap()}
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
@@ -186,13 +210,13 @@ impl Player {
 // }
 
 
-pub struct Food{
-    food_map: [[bool; BUFFER_WIDTH]; BUFFER_HEIGHT],
-    color: Color
-}
+// pub struct Food{
+//     food_map: [[bool; BUFFER_WIDTH]; BUFFER_HEIGHT],
+//     color: Color
+// }
 
-impl Food {
-    pub fn new() -> Self{
+// impl Food {
+//     pub fn new() -> Self{
         
-    }
-}
+//     }
+// }
