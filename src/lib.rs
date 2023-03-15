@@ -22,6 +22,7 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         Self {player1: Player::new(), player2: Player::new(), food: Food::new(25)}
+        
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -66,7 +67,9 @@ impl Game {
 
     pub fn tick(&mut self) {
         //self.walls.draw();
-        
+        if self.food.total_food < self.food.max_food{
+            self.food.add_food();
+        }
         for col in 0..BUFFER_WIDTH-1{
             for row in 0..BUFFER_HEIGHT-1{
                 
@@ -117,7 +120,7 @@ impl Player {
         let mut small_rng = SmallRng::seed_from_u64(100000);
         let rand_x = small_rng.gen_range(5..BUFFER_WIDTH - 5);
         let rand_y = small_rng.gen_range(5..BUFFER_HEIGHT - 5);
-        let mut body: [Duple; 8000] = [Duple::new(0, 0)];
+        let mut body: [Duple; 8000] = [Duple::new(0, 0); 8000];
         for i in 0..8000{
             body[i] = Duple::new(rand_x, rand_y);
         }
