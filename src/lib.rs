@@ -5,6 +5,87 @@ use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, Colo
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
 
+
+pub struct Game {
+    player1: Player,
+    player2: Player,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        Self {player: Player::new(), walls: Walls::new(WALLS)}
+    }
+
+    pub fn key(&mut self, key: DecodedKey) {
+        match key {
+            DecodedKey::RawKey(key) => {
+                let mut future = self.player;
+                match key {
+                    KeyCode::ArrowDown => {
+                        future.down();
+                    }
+                    KeyCode::ArrowUp => {
+                        future.up();
+                    } 
+                    KeyCode::ArrowLeft => {
+                        future.left();
+                    }
+                    KeyCode::ArrowRight => {
+                        future.right();
+                    }
+                    _ => {}
+                }
+                if !future.is_colliding(&self.walls) {
+                    self.player = future;
+                }
+            }
+            DecodedKey::Unicode(_) => {}
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.walls.draw();
+        plot('*', self.player.x, self.player.y, ColorCode::new(Color::Green, Color::Black));
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct Player {
+    x: usize,
+    y: usize,
+}
+
+impl Player {
+    pub fn new() -> Self {
+        Self {x: BUFFER_WIDTH / 2, y: BUFFER_HEIGHT / 2}
+    }
+
+    pub fn is_colliding(&self, walls: &Walls) -> bool {
+        // set up someway for this to check other players tail
+    }
+
+    pub fn down(&mut self) {
+        self.y += 1;
+    }
+
+    pub fn up(&mut self) {
+        self.y -= 1;
+    }
+
+    pub fn left(&mut self) {
+        self.x -= 1;
+    }
+
+    pub fn right(&mut self) {
+        self.x += 1;
+    }
+}
+
+
+
+
+
+
 #[derive(Copy,Debug,Clone,Eq,PartialEq)]
 pub struct LetterMover {
     letters: [char; BUFFER_WIDTH],
@@ -15,6 +96,8 @@ pub struct LetterMover {
     dx: ModNumC<usize, BUFFER_WIDTH>,
     dy: ModNumC<usize, BUFFER_HEIGHT>
 }
+
+
 
 impl LetterMover {
     pub fn new() -> Self {
