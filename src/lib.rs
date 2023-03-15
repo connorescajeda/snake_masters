@@ -67,10 +67,6 @@ impl Game {
     pub fn tick(&mut self) {
         //self.walls.draw();
         
-
-        if self.food.total_food <self.food.max_food{
-            self.food.add_food();
-        }
         for col in 0..BUFFER_WIDTH-1{
             for row in 0..BUFFER_HEIGHT-1{
                 
@@ -94,7 +90,6 @@ impl Game {
             self.food.add_food();
             self.player2.eat();
         }
-        //CHANGE FOOD TO RESTOCK WHEN EATEN> THIS IS TEMP
         
         
         
@@ -102,26 +97,45 @@ impl Game {
 }
 
 #[derive(Copy, Clone)]
+pub struct Duple {
+    x: usize,
+    y: usize,
+}
+impl Duple{
+    pub fn new(xt: usize, yt: usize) -> Self{
+        Self{x:xt, y: yt}
+    }
+}
+#[derive(Copy, Clone)]
 pub struct Player {
     x: usize,
     y: usize,
     food_ate: usize,
+    body: [Duple; 8000]
 }
 
 impl Player {
     pub fn new(state : u64) -> Self {
         let mut small_rng = SmallRng::seed_from_u64(state);
         Self {x: small_rng.next_u64() as usize % BUFFER_WIDTH , y: small_rng.next_u64() as usize % BUFFER_HEIGHT, food_ate: 0}
+        let mut body: [Duple; 8000] = [Duple::new(0, 0)];
+        for i in 0..8000{
+            body[i] = Duple::new(rand_x, rand_y);
+        }
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
     //     // set up someway for this to check other players tail
     //     false
     // }
+    
+    
 
     pub fn eat(&mut self){
         self.food_ate +=1;
-    }
+        }
+
+    
     pub fn down(&mut self) {
         if self.y + 1 < BUFFER_HEIGHT {
             self.y += 1
