@@ -5,22 +5,23 @@ use num::ToPrimitive;
 use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable, plot_num};
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
-use rand::{SeedableRng, Rng};
+use rand::{Rng, SeedableRng};
 use rand::RngCore;
 use rand::rngs::SmallRng;
 use core::default::Default;
 
 
-const FOOD_FREW: isize = 25;
+
 
 pub struct Game {
     player1: Player,
     player2: Player,
+    food: Food,
 }
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(), player2: Player::new()}
+        Self {player1: Player::new(), player2: Player::new(), food: Food::new(25)}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -66,8 +67,35 @@ impl Game {
     pub fn tick(&mut self) {
         //self.walls.draw();
         
+
+        if self.food.total_food <self.food.max_food{
+            self.food.add_food();
+        }
+        for col in 0..BUFFER_WIDTH-1{
+            for row in 0..BUFFER_HEIGHT-1{
+                
+                if self.food.food_map[col][row]{
+                    plot('f', col, row, ColorCode::new(self.food.color, Color::Black));
+                }
+            }
+        }
+
         plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
         plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
+        if (self.food.food_map[self.player1.x][self.player1.y]){
+            self.food.food_map[self.player1.x][self.player1.y] = false;
+            self.food.add_food();
+            self.player1.eat();
+        }
+        if (self.food.food_map[self.player2.x][self.player2.y]){
+            self.food.food_map[self.player2.x][self.player2.y] = false;
+            self.food.add_food();
+            self.player2.eat();
+        }
+        //CHANGE FOOD TO RESTOCK WHEN EATEN> THIS IS TEMP
+        
+        
+        
     }
 }
 
@@ -75,6 +103,7 @@ impl Game {
 pub struct Player {
     x: usize,
     y: usize,
+    food_ate: usize,
 }
 
 impl Player {
@@ -82,7 +111,7 @@ impl Player {
         let mut small_rng = SmallRng::seed_from_u64(100000);
         let rand_x = small_rng.gen_range(5..BUFFER_WIDTH - 5);
         let rand_y = small_rng.gen_range(5..BUFFER_HEIGHT - 5);
-        Self {x: rand_x.to_usize().unwrap(), y: rand_y.to_usize().unwrap()}
+        Self {x: rand_x.to_usize().unwrap(), y: rand_y.to_usize().unwrap(), food_ate: 0}
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
@@ -90,6 +119,9 @@ impl Player {
     //     false
     // }
 
+    pub fn eat(&mut self){
+        self.food_ate +=1;
+    }
     pub fn down(&mut self) {
         if self.y + 1 < BUFFER_HEIGHT {
             self.y += 1
@@ -200,23 +232,40 @@ impl Player {
 //         }
 //     }
 
-//     fn handle_unicode(&mut self, key: char) {
-//         if is_drawable(key) {
-//             self.letters[self.next_letter.a()] = key;
-//             self.next_letter += 1;
-//             self.num_letters = self.num_letters.saturating_add(&ModNumC::new(1));
-//         }
-//     }
+    // fn handle_unicode(&mut self, key: char) {
+    //     if is_drawable(key) {
+    //         self.letters[self.next_letter.a()] = key;
+    //         self.next_letter += 1;
+    //         self.num_letters = self.num_letters.saturating_add(&ModNumC::new(1));
+    //     }
+    // }
 // }
 
+pub struct Food{
+    food_map: [[bool; BUFFER_HEIGHT]; BUFFER_WIDTH],
+    color: Color,
+    total_food: usize,
+    max_food: usize,
+    rng: SmallRng,
+}
 
-// pub struct Food{
-//     food_map: [[bool; BUFFER_WIDTH]; BUFFER_HEIGHT],
-//     color: Color
-// }
-
-// impl Food {
-//     pub fn new() -> Self{
+impl Food {
+    pub fn new(max: usize) -> Self{
+        let mut temp = [[false; BUFFER_HEIGHT];BUFFER_WIDTH];
+        let c = Color::White;
+        Self {food_map: temp, color: c, total_food: 0, max_food: max, rng: SmallRng::seed_from_u64(42)}
         
-//     }
-// }
+    }
+
+    pub fn add_food(&mut self){
+        let col: usize = 1+ self.rng.next_u32() as usize % (BUFFER_WIDTH - 1);
+        let row: usize = 1 + self.rng.next_u32() as usize % (BUFFER_HEIGHT -1);
+        while true{
+            if !self.food_map[col][row]{
+                self.food_map[col][row] = true;
+                self.total_food +=1;
+                break;
+            }
+        }
+    }
+}
