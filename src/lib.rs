@@ -4,7 +4,12 @@ use bare_metal_modulo::{ModNumC, MNum, ModNumIterator};
 use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable};
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
+use rand::SeedableRng;
+use rand::RngCore;
+use core::default::Default;
 
+
+const FOOD_FREW: isize = 25;
 
 pub struct Game {
     player1: Player,
@@ -179,3 +184,15 @@ impl Player {
 //         }
 //     }
 // }
+
+
+pub struct Food{
+    food_map: [[bool; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    color: Color
+}
+
+impl Food {
+    pub fn new() -> Self{
+        
+    }
+}
