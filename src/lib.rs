@@ -2,7 +2,7 @@
 
 use bare_metal_modulo::{ModNumC, MNum, ModNumIterator};
 use num::ToPrimitive;
-use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable, plot_num};
+use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable, plot_num, plot_str};
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
 use rand::{Rng, SeedableRng};
@@ -21,7 +21,7 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(), player2: Player::new(), food: Food::new(25)}
+        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25)}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -79,7 +79,9 @@ impl Game {
                 }
             }
         }
-
+        if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
+            plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+        }
         plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
         plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
         if (self.food.food_map[self.player1.x][self.player1.y]){
@@ -107,11 +109,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Self {
-        let mut small_rng = SmallRng::seed_from_u64(100000);
-        let rand_x = small_rng.gen_range(5..BUFFER_WIDTH - 5);
-        let rand_y = small_rng.gen_range(5..BUFFER_HEIGHT - 5);
-        Self {x: rand_x.to_usize().unwrap(), y: rand_y.to_usize().unwrap(), food_ate: 0}
+    pub fn new(state : u64) -> Self {
+        let mut small_rng = SmallRng::seed_from_u64(state);
+        Self {x: small_rng.next_u64() as usize % BUFFER_WIDTH , y: small_rng.next_u64() as usize % BUFFER_HEIGHT, food_ate: 0}
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
