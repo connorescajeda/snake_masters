@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), no_std)]
 #![feature(const_trait_impl)]
 
+
 use bare_metal_modulo::{ModNumC, MNum, ModNumIterator};
 use num::ToPrimitive;
 use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable, plot_num, plot_str};
@@ -21,12 +22,13 @@ pub struct Game {
     player1: Player,
     player2: Player,
     food: Food,
-    grid: refresh
+    grid: refresh,
+    tick_count: isize
 }
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new()}
+        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new(), tick_count: 0}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -83,6 +85,12 @@ impl Game {
                 }
             }
         }
+        if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
+            plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+        }
+        self.player1.update_location(self.tick_count);
+        self.player2.update_location(self.tick_count);
+        
         
 
         plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
@@ -121,7 +129,7 @@ impl Game {
 
         
         
-        
+        self.tick_count += 1
     }
     
 
@@ -187,6 +195,7 @@ impl Duple{
 pub struct Player {
     x: usize,
     y: usize,
+    direction: char,
     food_ate: usize,
     body: [Duple; 8000],
     has_moved: bool,
@@ -225,6 +234,7 @@ impl Player {
     pub fn down(&mut self) {
         self.has_moved = true;
         if self.y + 1 < BUFFER_HEIGHT {
+            self.direction = 'd';
             self.y += 1;
             let mut temp: &Duple = &Duple::new(0,0);
             let mut temp2: &Duple = &Duple::new(0,0);
@@ -248,6 +258,7 @@ impl Player {
     pub fn up(&mut self) {
         self.has_moved = true;
         if self.y > 1 {
+            self.direction = 'u';
             self.y -= 1;
             let mut temp: &Duple = &Duple::new(0,0);
             let mut temp2: &Duple = &Duple::new(0,0);
@@ -270,6 +281,7 @@ impl Player {
     pub fn left(&mut self) {
         self.has_moved = true;
         if self.x > 0 {
+            self.direction = 'l';
             self.x -= 1;
             let mut temp: &Duple = &Duple::new(0,0);
             let mut temp2: &Duple = &Duple::new(0,0);
@@ -292,6 +304,7 @@ impl Player {
     pub fn right(&mut self) {
         self.has_moved = true;
         if self.x + 1 < BUFFER_WIDTH {
+            self.direction = 'r';
             self.x += 1;
             let mut temp: &Duple = &Duple::new(0,0);
             let mut temp2: &Duple = &Duple::new(0,0);
@@ -310,107 +323,25 @@ impl Player {
             }
         }
     }
-    pub fn draw(&mut self) {
-        for i in 0..3 + self.food_ate {
-            plot('1', self.body[i].x, self.body[i].y, ColorCode::new(Color::Red, Color::Black))
-        }
+
+    fn update_location(&mut self, tick_count : isize) {
+        //if tick_count % 3 == 0 {
+            if self.direction == 'r' {
+                self.right();
+            } else if self.direction == 'l' {
+                self.left();
+            } else if self.direction == 'd' {
+                self.down()
+            }  else if  self.direction == 'u' {
+                self.up();
+            }  
+       // }
+        
     }
+    
     
 }
 
-
-
-
-
-
-// #[derive(Copy,Debug,Clone,Eq,PartialEq)]
-// pub struct LetterMover {
-//     letters: [char; BUFFER_WIDTH],
-//     num_letters: ModNumC<usize, BUFFER_WIDTH>,
-//     next_letter: ModNumC<usize, BUFFER_WIDTH>,
-//     col: ModNumC<usize, BUFFER_WIDTH>,
-//     row: ModNumC<usize, BUFFER_HEIGHT>,
-//     dx: ModNumC<usize, BUFFER_WIDTH>,
-//     dy: ModNumC<usize, BUFFER_HEIGHT>
-// }
-
-
-
-// impl LetterMover {
-//     pub fn new() -> Self {
-//         LetterMover {
-//             letters: ['A'; BUFFER_WIDTH],
-//             num_letters: ModNumC::new(1),
-//             next_letter: ModNumC::new(1),
-//             col: ModNumC::new(BUFFER_WIDTH / 2),
-//             row: ModNumC::new(BUFFER_HEIGHT / 2),
-//             dx: ModNumC::new(0),
-//             dy: ModNumC::new(0)
-//         }
-//     }
-
-//     fn letter_columns(&self) -> impl Iterator<Item=usize> {
-//         ModNumIterator::new(self.col)
-//             .take(self.num_letters.a())
-//             .map(|m| m.a())
-//     }
-
-//     pub fn tick(&mut self) {
-//         self.clear_current();
-//         self.update_location();
-//         self.draw_current();
-//     }
-
-//     fn clear_current(&self) {
-//         for x in self.letter_columns() {
-//             plot(' ', x, self.row.a(), ColorCode::new(Color::Black, Color::Black));
-//         }
-//     }
-
-//     fn update_location(&mut self) {
-//         self.col += self.dx;
-//         self.row += self.dy;
-//     }
-
-//     fn draw_current(&self) {
-//         for (i, x) in self.letter_columns().enumerate() {
-//             plot(self.letters[i], x, self.row.a(), ColorCode::new(Color::Cyan, Color::Black));
-//         }
-//     }
-
-//     pub fn key(&mut self, key: DecodedKey) {
-//         match key {
-//             DecodedKey::RawKey(code) => self.handle_raw(code),
-//             DecodedKey::Unicode(c) => self.handle_unicode(c)
-//         }
-//     }
-
-//     fn handle_raw(&mut self, key: KeyCode) {
-//         match key {
-//             KeyCode::ArrowLeft => {
-//                 self.dx -= 1;
-//             }
-//             KeyCode::ArrowRight => {
-//                 self.dx += 1;
-//             }
-//             KeyCode::ArrowUp => {
-//                 self.dy -= 1;
-//             }
-//             KeyCode::ArrowDown => {
-//                 self.dy += 1;
-//             }
-//             _ => {}
-//         }
-//     }
-
-    // fn handle_unicode(&mut self, key: char) {
-    //     if is_drawable(key) {
-    //         self.letters[self.next_letter.a()] = key;
-    //         self.next_letter += 1;
-    //         self.num_letters = self.num_letters.saturating_add(&ModNumC::new(1));
-    //     }
-    // }
-// }
 
 pub struct Food{
     food_map: [[bool; BUFFER_HEIGHT]; BUFFER_WIDTH],
