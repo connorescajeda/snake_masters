@@ -93,15 +93,15 @@ impl Game {
         
         
 
-        plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
-        plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
+        plot('2', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
+        plot('1', self.player2.x, self.player2.y, ColorCode::new(Color::LightBlue, Color::Black));
         for i in 0..self.player1.food_ate+1{
             
-            plot('1', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
+            plot('2', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
         }
         for i in 0..self.player2.food_ate+1{
             
-            plot('2', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::Blue, Color::Black));
+            plot('1', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::LightBlue, Color::Black));
         }
         
         
@@ -117,15 +117,20 @@ impl Game {
         }
         if (self.player1.has_moved || self.player2.has_moved){
             if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
-                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 24, 0, ColorCode::new(Color::LightRed, Color::Black));
             }
             else if self.player1.check_collisions(self.player2) {
-                plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                plot_str("PLAYER 2 IS A LOOOOSER", 24, 0, ColorCode::new(Color::LightRed, Color::Black));
             }
             else if self.player2.check_collisions(self.player1) {
-                plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                plot_str("PLAYER 1 IS A LOOOOSER", 24, 0, ColorCode::new(Color::LightRed, Color::Black));
             }
         }
+        plot_str("Player 1: ", 05, 0, ColorCode::new(Color::LightBlue, Color::Black));
+        plot_num(self.player2.food_ate as isize , 16, 0, ColorCode::new(Color::LightBlue, Color::Black));
+        plot_str("Player 2: ", 55, 0, ColorCode::new(Color::Green, Color::Black));
+        plot_num(self.player1.food_ate as isize, 66, 0, ColorCode::new(Color::Green, Color::Black));
+
 
         
         
