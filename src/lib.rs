@@ -83,11 +83,10 @@ impl Game {
                 }
             }
         }
-        if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
-            plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
-        }
-
         
+
+        plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
+        plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
         for i in 0..self.player1.food_ate+1{
             
             plot('1', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
@@ -96,8 +95,7 @@ impl Game {
             
             plot('2', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::Blue, Color::Black));
         }
-        plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
-        plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
+        
         
         if (self.food.food_map[self.player1.x][self.player1.y]){
             self.food.food_map[self.player1.x][self.player1.y] = false;
@@ -109,6 +107,18 @@ impl Game {
             self.food.add_food();
             self.player2.eat();
         }
+        if (self.player1.has_moved || self.player2.has_moved){
+            if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
+                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            }
+            else if self.player1.check_collisions(self.player2) {
+                plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            }
+            else if self.player2.check_collisions(self.player1) {
+                plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            }
+        }
+
         
         
         
@@ -178,16 +188,18 @@ pub struct Player {
     x: usize,
     y: usize,
     food_ate: usize,
-    body: [Duple; 8000]
+    body: [Duple; 8000],
+    has_moved: bool,
 }
 
 impl Player {
     pub fn new(state : u64) -> Self {
         let mut small_rng = SmallRng::seed_from_u64(state);
-
+        let x = small_rng.next_u64() as usize % BUFFER_WIDTH ; 
+        let y = small_rng.next_u64() as usize % BUFFER_HEIGHT;
         let mut body: [Duple; 8000] = [Duple::new(0, 0); 8000];
 
-        Self {x: small_rng.next_u64() as usize % BUFFER_WIDTH , y: small_rng.next_u64() as usize % BUFFER_HEIGHT, food_ate: 0, body}
+        Self {x, y , food_ate: 0, body, has_moved: false}
         
     }
 
@@ -200,8 +212,18 @@ impl Player {
         self.food_ate +=1;
     }
 
-    
+    pub fn check_collisions(&mut self, op: Player) -> bool{
+        for (spot,dup) in op.body.iter().enumerate(){
+            if spot <= op.food_ate{
+                if self.body[0].x == dup.x && self.body[0].y == dup.y{
+                    return true;
+                }
+            }   
+        }
+        return false;
+    }
     pub fn down(&mut self) {
+        self.has_moved = true;
         if self.y + 1 < BUFFER_HEIGHT {
             self.y += 1;
             let mut temp: &Duple = &Duple::new(0,0);
@@ -219,10 +241,12 @@ impl Player {
                     temp = temp2;
                 }
             }
+            
         }
     }
 
     pub fn up(&mut self) {
+        self.has_moved = true;
         if self.y > 1 {
             self.y -= 1;
             let mut temp: &Duple = &Duple::new(0,0);
@@ -244,6 +268,7 @@ impl Player {
     }   
 
     pub fn left(&mut self) {
+        self.has_moved = true;
         if self.x > 0 {
             self.x -= 1;
             let mut temp: &Duple = &Duple::new(0,0);
@@ -265,6 +290,7 @@ impl Player {
     }
 
     pub fn right(&mut self) {
+        self.has_moved = true;
         if self.x + 1 < BUFFER_WIDTH {
             self.x += 1;
             let mut temp: &Duple = &Duple::new(0,0);
