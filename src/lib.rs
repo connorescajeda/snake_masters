@@ -1,4 +1,5 @@
 #![cfg_attr(not(test), no_std)]
+#![feature(const_trait_impl)]
 
 use bare_metal_modulo::{ModNumC, MNum, ModNumIterator};
 use num::ToPrimitive;
@@ -9,6 +10,9 @@ use rand::{Rng, SeedableRng};
 use rand::RngCore;
 use rand::rngs::SmallRng;
 use core::default::Default;
+use core::clone::Clone;
+use core::marker::Copy;
+use core::iter::Iterator;
 
 
 
@@ -82,8 +86,16 @@ impl Game {
         if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
             plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
         }
+
         
-        
+        for i in 0..self.player1.food_ate+1{
+            
+            plot('1', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
+        }
+        for i in 0..self.player2.food_ate+1{
+            
+            plot('2', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::Blue, Color::Black));
+        }
         plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
         plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
         
@@ -134,10 +146,27 @@ impl refresh {
     }
 }
 
-#[derive(Copy, Clone)]
 pub struct Duple {
     x: usize,
     y: usize,
+}
+impl Copy for Duple {}
+impl Clone for Duple{
+    fn clone(&self)-> Duple {
+        *self
+    }
+
+    fn clone_from(&mut self, source: &Self)
+    where
+        Self: ~const core::marker::Destruct,
+    {
+        *self = source.clone()
+    }
+}
+impl Default for Duple{
+    fn default() -> Self {
+        Self{x:0, y: 0}
+    }
 }
 impl Duple{
     pub fn new(xt: usize, yt: usize) -> Self{
@@ -155,13 +184,11 @@ pub struct Player {
 impl Player {
     pub fn new(state : u64) -> Self {
         let mut small_rng = SmallRng::seed_from_u64(state);
-        let mut body: [Duple; 8000] = [Duple::new(0, 0);8000];
-        let rand_x = small_rng.next_u64() as usize % BUFFER_WIDTH;
-        let rand_y = small_rng.next_u64() as usize % BUFFER_HEIGHT;
-        for i in 0..8000{
-            body[i] = Duple::new(rand_x, rand_y);
-        }
-        Self {x: rand_x , y: rand_y, food_ate: 0, body}
+
+        let mut body: [Duple; 8000] = [Duple::new(0, 0); 8000];
+
+        Self {x: small_rng.next_u64() as usize % BUFFER_WIDTH , y: small_rng.next_u64() as usize % BUFFER_HEIGHT, food_ate: 0, body}
+        
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
@@ -177,25 +204,85 @@ impl Player {
     
     pub fn down(&mut self) {
         if self.y + 1 < BUFFER_HEIGHT {
-            self.y += 1
+            self.y += 1;
+            let mut temp: &Duple = &Duple::new(0,0);
+            let mut temp2: &Duple = &Duple::new(0,0);
+
+            let mut tempbod = self.body.clone();
+            for (spot, dup) in tempbod.iter().enumerate(){
+                if spot==0{
+                    temp = dup;
+                    self.body[0] = Duple::new(self.x, self.y).clone();
+                }
+                else{
+                    temp2 = dup;
+                    self.body[spot] = *temp;
+                    temp = temp2;
+                }
+            }
         }
     }
 
     pub fn up(&mut self) {
         if self.y > 1 {
-            self.y -= 1
+            self.y -= 1;
+            let mut temp: &Duple = &Duple::new(0,0);
+            let mut temp2: &Duple = &Duple::new(0,0);
+
+            let mut tempbod = self.body.clone();
+            for (spot, dup) in tempbod.iter().enumerate(){
+                if spot==0{
+                    temp = dup;
+                    self.body[0] = Duple::new(self.x, self.y).clone();
+                }
+                else{
+                    temp2 = dup;
+                    self.body[spot] = *temp;
+                    temp = temp2;
+                }
+            }
         }
     }   
 
     pub fn left(&mut self) {
         if self.x > 0 {
-            self.x -= 1
+            self.x -= 1;
+            let mut temp: &Duple = &Duple::new(0,0);
+            let mut temp2: &Duple = &Duple::new(0,0);
+
+            let mut tempbod = self.body.clone();
+            for (spot, dup) in tempbod.iter().enumerate(){
+                if spot==0{
+                    temp = dup;
+                    self.body[0] = Duple::new(self.x, self.y).clone();
+                }
+                else{
+                    temp2 = dup;
+                    self.body[spot] = *temp;
+                    temp = temp2;
+                }
+            }
         }
     }
 
     pub fn right(&mut self) {
         if self.x + 1 < BUFFER_WIDTH {
-            self.x += 1
+            self.x += 1;
+            let mut temp: &Duple = &Duple::new(0,0);
+            let mut temp2: &Duple = &Duple::new(0,0);
+
+            let mut tempbod = self.body.clone();
+            for (spot, dup) in tempbod.iter().enumerate(){
+                if spot==0{
+                    temp = dup;
+                    self.body[0] = Duple::new(self.x, self.y).clone();
+                }
+                else{
+                    temp2 = dup;
+                    self.body[spot] = *temp;
+                    temp = temp2;
+                }
+            }
         }
     }
 }
