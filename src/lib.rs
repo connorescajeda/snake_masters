@@ -71,7 +71,7 @@ impl Game {
     
     pub fn tick(&mut self) {
         self.grid.draw();
-        
+
         if self.food.total_food < self.food.max_food{
             self.food.add_food();
         }
@@ -196,10 +196,9 @@ impl Player {
     //     false
     // }
     
-    
     pub fn eat(&mut self){
         self.food_ate +=1;
-        }
+    }
 
     
     pub fn down(&mut self) {
@@ -285,6 +284,12 @@ impl Player {
             }
         }
     }
+    pub fn draw(&mut self) {
+        for i in 0..3 + self.food_ate {
+            plot('1', self.body[i].x, self.body[i].y, ColorCode::new(Color::Red, Color::Black))
+        }
+    }
+    
 }
 
 
