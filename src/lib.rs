@@ -23,12 +23,13 @@ pub struct Game {
     player2: Player,
     food: Food,
     grid: refresh,
-    tick_count: isize
+    tick_count: isize,
+    running : bool
 }
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new(), tick_count: 0}
+        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new(), tick_count: 0, running: true}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -65,14 +66,28 @@ impl Game {
                     'd' => {
                         self.player2.right()
                         }
+                    'n' => {
+                        if !self.running{
+                            self.reset()
+                        }
+                    }
                     _ => {}
                 } 
             }
         }
     }
+    pub fn reset(&mut self) {
+        self.player1 = Player::new(50);
+        self.player2 = Player::new(100);
+        self.food = Food::new(25);
+        self.grid = refresh::new(); 
+        self.tick_count = 0; 
+        self.running = true;
+    }
     
     pub fn tick(&mut self) {
-        self.grid.draw();
+        if self.running {
+            self.grid.draw();
 
         if self.food.total_food < self.food.max_food{
             self.food.add_food();
@@ -117,22 +132,56 @@ impl Game {
         }
         if (self.player1.has_moved || self.player2.has_moved){
             if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
-                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+<<<<<<< Updated upstream
+                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 24, 0, ColorCode::new(Color::LightRed, Color::Black));
             }
             else if self.player1.check_collisions(self.player2) {
                 plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
             }
             else if self.player2.check_collisions(self.player1) {
-                plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                plot_str("PLAYER 1 IS A LOOOOSER", 24, 0, ColorCode::new(Color::LightRed, Color::Black));
+=======
+                self.running = false;
+            }
+            else if self.player1.check_collisions(self.player2) {
+                self.running = false;
+            }
+            else if self.player2.check_collisions(self.player1) {
+                self.running = false;
             }
         }
+        self.tick_count += 1
+        } else {
+            self.grid.draw();
+            if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
+                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                self.running = false;
+            }
+            else if self.player1.check_collisions(self.player2) {
+                plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                self.running = false;
+            }
+            else if self.player2.check_collisions(self.player1) {
+                plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+                self.running = false;
+>>>>>>> Stashed changes
+            }
+            plot_str("PRESS N TO START THE NEXT GAME", 30, 20, ColorCode::new(Color::LightRed, Color::Black));
+        }
+<<<<<<< Updated upstream
+        plot_str("Player 1: ", 05, 0, ColorCode::new(Color::LightBlue, Color::Black));
+        plot_num(self.player2.food_ate as isize , 16, 0, ColorCode::new(Color::LightBlue, Color::Black));
+        plot_str("Player 2: ", 55, 0, ColorCode::new(Color::Green, Color::Black));
+        plot_num(self.player1.food_ate as isize, 66, 0, ColorCode::new(Color::Green, Color::Black));
 
         
         
         self.tick_count += 1
+=======
+         
+>>>>>>> Stashed changes
     }
     
-
     
 }
 
@@ -208,7 +257,7 @@ impl Player {
         let y = small_rng.next_u64() as usize % BUFFER_HEIGHT;
         let mut body: [Duple; 8000] = [Duple::new(0, 0); 8000];
 
-        Self {x, y , food_ate: 0, body, has_moved: false}
+        Self {x, y , food_ate: 0, body, has_moved: false, direction: 'n'}
         
     }
 
@@ -325,7 +374,7 @@ impl Player {
     }
 
     fn update_location(&mut self, tick_count : isize) {
-        //if tick_count % 3 == 0 {
+        if tick_count % 3 == 0 {
             if self.direction == 'r' {
                 self.right();
             } else if self.direction == 'l' {
@@ -335,7 +384,7 @@ impl Player {
             }  else if  self.direction == 'u' {
                 self.up();
             }  
-       // }
+       }
         
     }
     
