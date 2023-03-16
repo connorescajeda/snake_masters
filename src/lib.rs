@@ -24,12 +24,14 @@ pub struct Game {
     food: Food,
     grid: refresh,
     tick_count: isize,
-    running : bool
+    running : bool,
+    player_1_score: usize,
+    player_2_score: usize,
 }
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new(), tick_count: 0, running: true}
+        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new(), tick_count: 0, running: true, player_1_score: 0, player_2_score: 0}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -89,77 +91,83 @@ impl Game {
         if self.running {
             self.grid.draw();
 
-        if self.food.total_food < self.food.max_food{
-            self.food.add_food();
-        }
-        for col in 0..BUFFER_WIDTH-1{
-            for row in 0..BUFFER_HEIGHT-1{
-                
-                if self.food.food_map[col][row]{
-                    plot('f', col, row, ColorCode::new(self.food.color, Color::Black));
+            if self.food.total_food < self.food.max_food{
+                self.food.add_food();
+            }
+            for col in 0..BUFFER_WIDTH-1{
+                for row in 0..BUFFER_HEIGHT-1{
+                    
+                    if self.food.food_map[col][row]{
+                        plot('*', col, row, ColorCode::new(self.food.color, Color::Black));
+                    }
                 }
             }
-        }
-        if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
-            plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
-        }
-        self.player1.update_location(self.tick_count);
-        self.player2.update_location(self.tick_count);
-        
-        
+            self.player1.update_location(self.tick_count);
+            self.player2.update_location(self.tick_count);
+            
+            
 
-        plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
-        plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
-        for i in 0..self.player1.food_ate+1{
+            plot('2', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
+            plot('1', self.player2.x, self.player2.y, ColorCode::new(Color::LightBlue, Color::Black));
+            for i in 0..self.player1.food_ate+1{
+                
+                plot('2', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
+            }
+            for i in 0..self.player2.food_ate+1{
+                
+                plot('1', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::LightBlue, Color::Black));
+            }
             
-            plot('1', self.player1.body[i].x, self.player1.body[i].y, ColorCode::new(Color::Green, Color::Black));
-        }
-        for i in 0..self.player2.food_ate+1{
             
-            plot('2', self.player2.body[i].x, self.player2.body[i].y, ColorCode::new(Color::Blue, Color::Black));
-        }
-        
-        
-        if (self.food.food_map[self.player1.x][self.player1.y]){
-            self.food.food_map[self.player1.x][self.player1.y] = false;
-            self.food.add_food();
-            self.player1.eat();
-        }
-        if (self.food.food_map[self.player2.x][self.player2.y]){
-            self.food.food_map[self.player2.x][self.player2.y] = false;
-            self.food.add_food();
-            self.player2.eat();
-        }
-        if (self.player1.has_moved || self.player2.has_moved){
-            if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
-                self.running = false;
+            if (self.food.food_map[self.player1.x][self.player1.y]){
+                self.food.food_map[self.player1.x][self.player1.y] = false;
+                self.food.add_food();
+                self.player1.eat();
             }
-            else if self.player1.check_collisions(self.player2) {
-                self.running = false;
+            if (self.food.food_map[self.player2.x][self.player2.y]){
+                self.food.food_map[self.player2.x][self.player2.y] = false;
+                self.food.add_food();
+                self.player2.eat();
             }
-            else if self.player2.check_collisions(self.player1) {
-                self.running = false;
+            if (self.player1.has_moved || self.player2.has_moved) {
+                if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1)  || (self.player1.edge && self.player2.edge){
+                    self.running = false;
+                    plot_str("YOU BOTHER ARE FREAKIN LOSERS", 22, 0, ColorCode::new(Color::LightRed, Color::Black));
+
+                }
+                else if self.player1.check_collisions(self.player2) || self.player1.edge{
+                    self.running = false;
+                    self.player_2_score +=1;
+                    plot_str("PLAYER 2 IS A LOOOOSER", 25, 0, ColorCode::new(Color::LightRed, Color::Black));
+
+                }
+                else if self.player2.check_collisions(self.player1) || self.player2.edge{
+                    self.running = false;
+                    plot_str("PLAYER 1 IS A LOOOOSER", 25, 0, ColorCode::new(Color::LightRed, Color::Black));
+                    self.player_1_score +=1;
+                }
             }
-        }
-        self.tick_count += 1
+            self.tick_count += 1
         } else {
-            self.grid.draw();
-            if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
-                plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
-            }
-            else if self.player1.check_collisions(self.player2) {
-                plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
-            }
-            else if self.player2.check_collisions(self.player1) {
-                plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            //self.grid.draw();
+            // if self.player1.check_collisions(self.player2) && self.player2.check_collisions(self.player1) {
+            //     plot_str("YOU BOTHER ARE FREAKIN LOSERS", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            // }
+            // else if self.player1.check_collisions(self.player2)  && self.running{
+            //     self.player_1_score +=1;
+            //     plot_str("PLAYER 1 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            // }
+            // else if self.player2.check_collisions(self.player1) && self.running{
+            //     plot_str("PLAYER 2 IS A LOOOOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
+            //     self.player_2_score +=1;
 
-            }
-            plot_str("PRESS N TO START THE NEXT GAME", 30, 20, ColorCode::new(Color::LightRed, Color::Black));
+            // }
+            plot_str("PRESS N TO START THE NEXT GAME", 22, 20, ColorCode::new(Color::LightRed, Color::Black));
         }
         plot_str("Player 1: ", 05, 0, ColorCode::new(Color::LightBlue, Color::Black));
-        plot_num(self.player2.food_ate as isize , 16, 0, ColorCode::new(Color::LightBlue, Color::Black));
+        plot_num(self.player_2_score as isize , 16, 0, ColorCode::new(Color::LightBlue, Color::Black));
         plot_str("Player 2: ", 55, 0, ColorCode::new(Color::Green, Color::Black));
-        plot_num(self.player1.food_ate as isize, 66, 0, ColorCode::new(Color::Green, Color::Black));
+        plot_num(self.player_1_score as isize, 66, 0, ColorCode::new(Color::Green, Color::Black));
 
         
         self.tick_count += 1
@@ -231,6 +239,7 @@ pub struct Player {
     food_ate: usize,
     body: [Duple; 8000],
     has_moved: bool,
+    edge: bool,
 }
 
 impl Player {
@@ -240,7 +249,7 @@ impl Player {
         let y = small_rng.next_u64() as usize % BUFFER_HEIGHT;
         let mut body: [Duple; 8000] = [Duple::new(0, 0); 8000];
 
-        Self {x, y , food_ate: 0, body, has_moved: false, direction: 'n'}
+        Self {x, y , food_ate: 0, body, has_moved: false, direction: 'n', edge: false}
         
     }
 
@@ -285,6 +294,9 @@ impl Player {
             }
             
         }
+        else{
+            self.edge = true;
+        }
     }
 
     pub fn up(&mut self) {
@@ -307,6 +319,9 @@ impl Player {
                     temp = temp2;
                 }
             }
+        }
+        else{
+            self.edge = true;
         }
     }   
 
@@ -331,6 +346,9 @@ impl Player {
                 }
             }
         }
+        else{
+            self.edge = true;
+        }
     }
 
     pub fn right(&mut self) {
@@ -353,6 +371,9 @@ impl Player {
                     temp = temp2;
                 }
             }
+        }
+        else{
+            self.edge = true;
         }
     }
 
