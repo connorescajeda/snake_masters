@@ -17,11 +17,12 @@ pub struct Game {
     player1: Player,
     player2: Player,
     food: Food,
+    grid: refresh
 }
 
 impl Game {
     pub fn new() -> Self {
-        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25)}
+        Self {player1: Player::new(50), player2: Player::new(100), food: Food::new(25), grid: refresh::new()}
     }
 
     pub fn key(&mut self, key: DecodedKey) {
@@ -63,9 +64,10 @@ impl Game {
             }
         }
     }
-
+    
     pub fn tick(&mut self) {
-        //self.walls.draw();
+        self.grid.draw();
+        
         if self.food.total_food < self.food.max_food{
             self.food.add_food();
         }
@@ -80,8 +82,11 @@ impl Game {
         if self.player1.x == self.player2.x && self.player2.y == self.player1.y {
             plot_str("FREAKING LOSER", 30, 0, ColorCode::new(Color::LightRed, Color::Black));
         }
+        
+        
         plot('1', self.player1.x, self.player1.y, ColorCode::new(Color::Green, Color::Black));
         plot('2', self.player2.x, self.player2.y, ColorCode::new(Color::Blue, Color::Black));
+        
         if (self.food.food_map[self.player1.x][self.player1.y]){
             self.food.food_map[self.player1.x][self.player1.y] = false;
             self.food.add_food();
@@ -96,6 +101,37 @@ impl Game {
         
         
     }
+    
+
+    
+}
+
+pub struct refresh {
+    grid : [[bool; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    color: Color
+}
+
+impl refresh {
+    pub fn new() -> Self {
+        let mut grid = [[false; BUFFER_WIDTH]; BUFFER_HEIGHT];
+        
+        Self {grid, color: Color::Black}
+    }
+
+    fn char_at(&self, row: usize, col: usize) -> char {
+        if self.grid[row][col] {
+            '#'
+        } else {
+            ' '
+        }
+    }
+    fn draw(&self) {
+        for row in 0..self.grid.len() {
+            for col in 0..self.grid[row].len(){
+                plot(self.char_at(row, col,), col, row, ColorCode::new(Color::Red, Color::Black));
+            }
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -105,7 +141,7 @@ pub struct Duple {
 }
 impl Duple{
     pub fn new(xt: usize, yt: usize) -> Self{
-        Self{x:xt, y: yt}
+        Self{x: xt, y: yt}
     }
 }
 #[derive(Copy, Clone)]
@@ -119,11 +155,13 @@ pub struct Player {
 impl Player {
     pub fn new(state : u64) -> Self {
         let mut small_rng = SmallRng::seed_from_u64(state);
-        Self {x: small_rng.next_u64() as usize % BUFFER_WIDTH , y: small_rng.next_u64() as usize % BUFFER_HEIGHT, food_ate: 0}
-        let mut body: [Duple; 8000] = [Duple::new(0, 0)];
+        let mut body: [Duple; 8000] = [Duple::new(0, 0);8000];
+        let rand_x = small_rng.next_u64() as usize % BUFFER_WIDTH;
+        let rand_y = small_rng.next_u64() as usize % BUFFER_HEIGHT;
         for i in 0..8000{
             body[i] = Duple::new(rand_x, rand_y);
         }
+        Self {x: rand_x , y: rand_y, food_ate: 0, body}
     }
 
     // pub fn is_colliding(&self, walls: &Walls) -> bool {
@@ -132,7 +170,6 @@ impl Player {
     // }
     
     
-
     pub fn eat(&mut self){
         self.food_ate +=1;
         }
